@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Job, JobStatus, Message, QuoteItem, User } from '../types';
 
 interface BookingsViewProps {
@@ -9,17 +9,25 @@ interface BookingsViewProps {
 }
 
 export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, currentUser }) => {
-  const [activeChat, setActiveChat] = useState<Job | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // حالة بناء عرض السعر للفني
+  // الحصول على بيانات الطلب النشط حالياً من القائمة الكلية لضمان المزامنة
+  const activeChat = jobs.find(j => j.id === activeChatId) || null;
+
   const [quoteItems, setQuoteItems] = useState<Partial<QuoteItem>[]>([
     { id: '1', label: 'المصنعية (شاملة المعاينة)', amount: 150, type: 'LABOR' },
     { id: '2', label: 'خامات ومستلزمات', amount: 0, type: 'MATERIAL' }
   ]);
 
   const isProvider = currentUser.role === 'PROVIDER';
+
+  // التمرير لآخر رسالة عند التحديث
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeChat?.messages]);
 
   const getStatusInfo = (status: JobStatus) => {
     switch (status) {
@@ -34,18 +42,48 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !activeChat) return;
+    
+    // منع تبادل الأرقام
     if (/\d{8,}/.test(newMessage)) {
-      alert('⚠️ تنبيه: ممنوع تبادل أرقام الموبايل في الدردشة. برجاء استخدام التطبيق لضمان حقوقك المالية.');
+      alert('⚠️ تنبيه: ممنوع تبادل أرقام الموبايل في الدردشة لضمان حقوقك المالية.');
       return;
     }
+
+    const userMsg: Message = {
+      id: 'msg-' + Date.now(),
+      senderId: currentUser.id,
+      text: newMessage,
+      timestamp: new Date().toISOString()
+    };
+
+    const updatedMessages = [...(activeChat.messages || []), userMsg];
+    updateStatus(activeChat.id, activeChat.status, { messages: updatedMessages });
     setNewMessage('');
+
+    // محاكاة رد الطرف الآخر بعد ثانيتين
+    setTimeout(() => {
+      const botMsg: Message = {
+        id: 'msg-bot-' + Date.now(),
+        senderId: isProvider ? activeChat.customerId : activeChat.providerId,
+        text: isProvider ? "تمام يا أسطى، أنا مستني عرض السعر منك عشان أحجز." : "وصلت يا فندم، أنا هعمل المعاينة وهبعتلك عرض السعر فوراً.",
+        timestamp: new Date().toISOString()
+      };
+      
+      const messagesWithReply = [...updatedMessages, botMsg];
+      updateStatus(activeChat.id, activeChat.status, { messages: messagesWithReply });
+
+      // إذا كان المستخدم صنايعي وفي مرحلة المعاينة واستلم رسالة، نفتح مُنشئ السعر تلقائياً
+      if (isProvider && activeChat.status === JobStatus.INTERVIEWING) {
+        setShowQuoteBuilder(true);
+      }
+    }, 2000);
   };
 
   const handleCancelJob = (jobId: string) => {
-    if (confirm('هل أنت متأكد من إلغاء هذا الطلب؟ لن يتم خصم أي رسوم منك.')) {
+    if (confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) {
       updateStatus(jobId, JobStatus.CANCELLED);
-      setActiveChat(null);
+      setActiveChatId(null);
     }
   };
 
@@ -61,13 +99,8 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
       quoteItems: quoteItems as QuoteItem[]
     });
     setShowQuoteBuilder(false);
-    setActiveChat(null);
+    setActiveChatId(null);
     alert('تم إرسال عرض السعر التفصيلي للعميل بنجاح.');
-  };
-
-  const calculateTotal = (items?: QuoteItem[]) => {
-    if (!items) return activeChat?.price || 0;
-    return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
   return (
@@ -124,7 +157,7 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
                       </button>
                     )}
                     <button 
-                      onClick={() => setActiveChat(job)}
+                      onClick={() => setActiveChatId(job.id)}
                       className="bg-[#1E3A8A] text-white text-lg px-8 py-4 rounded-3xl font-black shadow-2xl active:scale-95 transition-all"
                     >
                       {job.status === JobStatus.ESTIMATE_PROVIDED ? 'مراجعة العرض' : 'فتح المحادثة'}
@@ -157,23 +190,28 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
                   <p className="text-base text-slate-600 font-black mt-2">طلب رقم #{activeChat.id.toUpperCase()}</p>
                 </div>
               </div>
-              <button onClick={() => { setActiveChat(null); setShowQuoteBuilder(false); }} className="bg-slate-100 text-slate-600 w-14 h-14 rounded-full flex items-center justify-center font-black text-4xl hover:bg-slate-200 transition-all shadow-sm">&times;</button>
+              <button onClick={() => { setActiveChatId(null); setShowQuoteBuilder(false); }} className="bg-slate-100 text-slate-600 w-14 h-14 rounded-full flex items-center justify-center font-black text-4xl hover:bg-slate-200 transition-all shadow-sm">&times;</button>
             </div>
             
-            <div className="flex-1 overflow-y-auto space-y-6 p-6 bg-slate-50 rounded-[40px] border-4 border-slate-200 scroll-smooth shadow-inner">
-               {/* Provider Quote Builder */}
-               {isProvider && activeChat.status === JobStatus.INTERVIEWING && !showQuoteBuilder && (
-                 <button 
-                  onClick={() => setShowQuoteBuilder(true)}
-                  className="w-full bg-[#F97316] text-white py-6 rounded-[32px] font-black text-2xl shadow-2xl active:scale-95 transition-all border-b-8 border-orange-800"
+            <div className="flex-1 overflow-y-auto space-y-6 p-6 bg-slate-50 rounded-[40px] border-4 border-slate-200 scroll-smooth shadow-inner relative">
+               
+               {/* سجل الرسائل الحية */}
+               {activeChat.messages?.map((msg) => (
+                 <div 
+                   key={msg.id} 
+                   className={`${msg.senderId === currentUser.id ? 'bg-[#1E3A8A] text-white float-left text-left' : 'bg-white text-slate-900 float-right text-right border-2 border-slate-100'} p-5 rounded-[28px] text-lg font-bold shadow-md w-[85%] clear-both mb-4 leading-relaxed transition-all animate-in zoom-in-95`}
                  >
-                   تقديم عرض سعر تفصيلي 📝
-                 </button>
-               )}
-
+                   {msg.text}
+                   <div className={`text-[10px] mt-2 opacity-60 ${msg.senderId === currentUser.id ? 'text-blue-100' : 'text-slate-400'}`}>
+                      {new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                   </div>
+                 </div>
+               ))}
+               
+               {/* مُنشئ عرض السعر */}
                {showQuoteBuilder && (
-                 <div className="bg-white p-8 rounded-[40px] border-4 border-orange-400 space-y-6 shadow-xl animate-in zoom-in-95">
-                   <h4 className="text-2xl font-black text-slate-900 mb-4">بنود عرض السعر</h4>
+                 <div className="bg-white p-8 rounded-[40px] border-4 border-orange-400 space-y-6 shadow-xl animate-in zoom-in-95 clear-both w-full mb-6">
+                   <h4 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-2"><span>📝</span> بنود عرض السعر النهائي</h4>
                    {quoteItems.map((item, index) => (
                      <div key={item.id} className="grid grid-cols-12 gap-3 items-center">
                         <input 
@@ -197,31 +235,23 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
                             setQuoteItems(newItems);
                           }}
                         />
-                        <button className="col-span-1 text-red-400 font-black" onClick={() => setQuoteItems(quoteItems.filter((_, i) => i !== index))}>&times;</button>
+                        <button className="col-span-1 text-red-400 font-black text-2xl" onClick={() => setQuoteItems(quoteItems.filter((_, i) => i !== index))}>&times;</button>
                      </div>
                    ))}
                    <button onClick={addQuoteItem} className="text-[#1E3A8A] font-black text-sm flex items-center gap-2">+ إضافة بند جديد</button>
                    <div className="pt-4 border-t-2 border-slate-50 flex justify-between items-center">
                       <span className="text-xl font-black">الإجمالي: {quoteItems.reduce((s, i) => s + (Number(i.amount) || 0), 0)} ج.م</span>
-                      <button onClick={submitQuote} className="bg-green-600 text-white px-8 py-3 rounded-2xl font-black">إرسال العرض</button>
+                      <button onClick={submitQuote} className="bg-green-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg">إرسال العرض</button>
                    </div>
                  </div>
                )}
 
-               <div className="bg-orange-50 text-orange-950 text-lg p-6 rounded-[32px] border-4 border-orange-200 leading-relaxed font-bold text-center shadow-sm">
+               <div className="bg-orange-50 text-orange-950 text-sm p-5 rounded-[32px] border-2 border-orange-200 leading-relaxed font-bold text-center shadow-sm clear-both w-full mb-6">
                  🛡️ <span className="font-black text-orange-900">مرحلة المقابلة:</span> {isProvider ? 'قم بالمعاينة أولاً ثم قدم عرض سعر نهائي بالبنود.' : 'اتفق مع الفني على كل التفاصيل. يمكنك إلغاء الطلب في أي وقت قبل دفع العربون.'}
                </div>
 
-               <div className="bg-white p-6 rounded-[28px] text-xl font-bold shadow-lg w-[90%] float-right border-2 border-slate-100 leading-relaxed text-slate-900">
-                 يا فندم، أنا ممكن أجيلك المعاينة النهاردة الساعة ٦ مساءً. هل الموقع في التجمع؟
-               </div>
-               
-               <div className="bg-[#1E3A8A] p-6 rounded-[28px] text-xl font-bold text-white shadow-2xl w-[90%] float-left clear-both mt-4 leading-relaxed">
-                 أيوة، العنوان دقيق جداً. مستنيك للمعاينة عشان نحدد السعر النهائي.
-               </div>
-
                {activeChat.status === JobStatus.ESTIMATE_PROVIDED && (
-                 <div className="bg-white border-[6px] border-orange-500 p-8 rounded-[48px] w-full float-right space-y-6 clear-both mt-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] animate-in zoom-in-95 duration-500">
+                 <div className="bg-white border-[6px] border-orange-500 p-8 rounded-[48px] w-full float-right space-y-6 clear-both mb-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] animate-in zoom-in-95 duration-500">
                    <div className="flex items-center gap-4">
                      <span className="text-4xl">🧾</span>
                      <p className="text-2xl font-black text-slate-900 tracking-tight">عرض السعر التفصيلي:</p>
@@ -250,52 +280,33 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ jobs, updateStatus, 
                       <button 
                         onClick={() => {
                           updateStatus(activeChat.id, JobStatus.DEPOSIT_PAID);
-                          setActiveChat(null);
+                          setActiveChatId(null);
                           alert('تم حجز المبلغ بنجاح! الصنايعي هيبدأ شغل دلوقتي.');
                         }}
                         className="w-full bg-[#1E3A8A] text-white py-6 rounded-[32px] font-black text-2xl shadow-2xl active:scale-95 transition-all hover:bg-blue-800 border-b-8 border-blue-900"
                       >
                         موافقة وحجز المبلغ 🔒
                       </button>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button 
-                          onClick={() => {
-                            setNewMessage("السعر غالي شوية، ممكن ننزل في بند الخامات؟");
-                            handleSendMessage();
-                            alert('تم إرسال طلب التفاوض للفني.');
-                          }}
-                          className="bg-orange-50 text-orange-700 py-4 rounded-[32px] font-black text-lg active:scale-95 transition-all border-2 border-orange-200"
-                        >
-                          تفاوض على السعر 💬
-                        </button>
-                        <button 
-                          onClick={() => handleCancelJob(activeChat.id)}
-                          className="bg-red-50 text-red-600 py-4 rounded-[32px] font-black text-lg active:scale-95 transition-all border-2 border-red-100"
-                        >
-                          رفض وإلغاء ❌
-                        </button>
-                      </div>
                     </div>
-                   )}
-
-                   {isProvider && (
-                     <p className="text-center font-black text-orange-600 animate-pulse bg-orange-50 p-4 rounded-2xl">بانتظار موافقة العميل على العرض أو التفاوض...</p>
                    )}
                  </div>
                )}
+               
+               <div ref={messagesEndRef} />
             </div>
 
-            <div className="relative pt-6 shrink-0">
+            <div className="relative pt-6 shrink-0 flex gap-2">
               <input 
                 type="text" 
                 placeholder="اكتب رسالتك هنا..."
-                className="w-full bg-slate-50 border-4 border-slate-200 rounded-[32px] px-8 py-6 outline-none focus:ring-8 focus:ring-blue-100 text-2xl font-bold text-slate-900 transition-all placeholder:text-slate-400"
+                className="flex-1 bg-slate-50 border-4 border-slate-200 rounded-[32px] px-8 py-5 outline-none focus:ring-8 focus:ring-blue-100 text-xl font-bold text-slate-900 transition-all placeholder:text-slate-400"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               />
               <button 
                 onClick={handleSendMessage}
-                className="absolute left-4 top-10 bottom-4 bg-[#1E3A8A] text-white px-10 rounded-2xl font-black text-lg shadow-xl active:scale-90 transition-all hover:bg-blue-800"
+                className="bg-[#1E3A8A] text-white px-8 rounded-[32px] font-black text-lg shadow-xl active:scale-90 transition-all hover:bg-blue-800"
               >
                 إرسال
               </button>

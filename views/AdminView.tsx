@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Category, AdminLog } from '../App';
-import { User } from '../types';
+import { User, Provider } from '../types';
 
 interface AdminViewProps {
   categories: Category[];
@@ -13,6 +13,9 @@ interface AdminViewProps {
   users: User[];
   adminLogs: AdminLog[];
 }
+
+type SortKey = 'completedJobs' | 'rating' | 'cancellationRate' | 'responseTime';
+type SortOrder = 'asc' | 'desc';
 
 export const AdminView: React.FC<AdminViewProps> = ({ 
   categories, 
@@ -38,6 +41,56 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
   const [tempAdminPhone, setTempAdminPhone] = useState(adminCreds.phone);
   const [tempAdminOtp, setTempAdminOtp] = useState(adminCreds.otp);
+
+  // منطق الترتيب الجديد
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey, order: SortOrder }>({ 
+    key: 'completedJobs', 
+    order: 'desc' 
+  });
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig(prev => ({
+      key,
+      order: prev.key === key && prev.order === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  // توليد بيانات أداء مستقرة بناءً على الـ ID لضمان عدم تغير الأرقام عند الترتيب
+  const providerPerformanceData = useMemo(() => {
+    const providers = users
+      .filter(u => u.role === 'PROVIDER')
+      .map(u => {
+        const p = u as unknown as Provider;
+        // استخدام طول الاسم أو الـ ID لتوليد أرقام ثابتة للمحاكاة
+        const seed = u.id.length + u.name.length;
+        return {
+          ...p,
+          completedJobs: p.completedJobs || (seed * 7) % 100 + 5,
+          ratingAvg: p.rating?.average || ((seed * 3) % 20 / 10 + 3).toFixed(1),
+          cancellationRate: (seed * 11) % 20, // نسبة مئوية ثابتة
+          responseTime: (seed * 13) % 45 + 5, // بالدقائق ثابتة
+        };
+      });
+
+    return providers.sort((a, b) => {
+      let valA: number;
+      let valB: number;
+
+      if (sortConfig.key === 'rating') {
+        valA = Number(a.ratingAvg);
+        valB = Number(b.ratingAvg);
+      } else {
+        valA = Number(a[sortConfig.key as keyof typeof a]);
+        valB = Number(b[sortConfig.key as keyof typeof b]);
+      }
+
+      if (sortConfig.order === 'asc') {
+        return valA - valB;
+      } else {
+        return valB - valA;
+      }
+    });
+  }, [users, sortConfig]);
 
   const handleEditCategory = (cat: Category) => {
     setEditingId(cat.id);
@@ -81,6 +134,85 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </span>
       </div>
 
+      {/* Revenue Card */}
+      <section className="bg-slate-900 text-white p-10 rounded-[48px] shadow-2xl relative overflow-hidden">
+        <div className="relative z-10">
+          <p className="text-slate-400 text-lg font-bold mb-2">أرباح المنصة القابلة للسحب</p>
+          <p className="text-5xl font-black mb-8">{stats.platformRevenue.toLocaleString()} ج.م</p>
+          <button className="w-full bg-green-500 text-white py-5 rounded-[28px] font-black text-2xl shadow-xl shadow-green-900/40 active:scale-95 transition-all">
+            سحب الأرباح للبنك 💸
+          </button>
+        </div>
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-24 -mt-24"></div>
+      </section>
+
+      {/* Improved: Provider Performance Analytics Section */}
+      <section className="bg-white p-8 rounded-[40px] shadow-lg border-2 border-blue-50 space-y-8">
+        <div className="flex flex-col gap-4">
+          <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+            <span>📈</span> جدول أداء الفنيين
+          </h3>
+          <p className="text-xs text-slate-400 font-bold mb-2">اضغط على المعيار للترتيب (تصاعدي/تنازلي)</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'completedJobs', label: 'العمليات' },
+              { id: 'rating', label: 'التقييم' },
+              { id: 'cancellationRate', label: 'الإلغاء' },
+              { id: 'responseTime', label: 'سرعة الرد' }
+            ].map(item => (
+              <button 
+                key={item.id}
+                onClick={() => handleSort(item.id as SortKey)}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${sortConfig.key === item.id ? 'bg-[#1E3A8A] text-white shadow-md' : 'bg-slate-100 text-slate-500'}`}
+              >
+                {item.label}
+                {sortConfig.key === item.id && (
+                  <span>{sortConfig.order === 'desc' ? '↓' : '↑'}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {providerPerformanceData.map((provider) => (
+            <div key={provider.id} className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 space-y-4 hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-4">
+                <img src={provider.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+                <div className="flex-1">
+                  <h4 className="font-black text-slate-900 text-lg">{provider.name}</h4>
+                  <p className="text-xs text-slate-400 font-bold tracking-wider" dir="ltr">{provider.phone}</p>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1 text-orange-500">
+                    <span className="font-black">{provider.ratingAvg}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold">متوسط التقييم</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'completedJobs' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                  <p className="text-[10px] text-slate-400 font-black mb-1">العمليات</p>
+                  <p className="text-lg font-black text-[#1E3A8A]">{provider.completedJobs}</p>
+                </div>
+                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'cancellationRate' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                  <p className="text-[10px] text-slate-400 font-black mb-1">الإلغاء</p>
+                  <p className={`text-lg font-black ${provider.cancellationRate > 10 ? 'text-red-500' : 'text-green-600'}`}>
+                    {provider.cancellationRate}%
+                  </p>
+                </div>
+                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'responseTime' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                  <p className="text-[10px] text-slate-400 font-black mb-1">الرد (د)</p>
+                  <p className="text-lg font-black text-slate-700">{provider.responseTime}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Admin Login Settings */}
       <section className="bg-white p-8 rounded-[40px] shadow-lg border-2 border-red-50 space-y-6">
         <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
@@ -114,7 +246,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       </section>
 
-      {/* Admin Logins Record (NEW) */}
+      {/* Admin Logins Record */}
       <section className="bg-white p-8 rounded-[40px] shadow-lg border-2 border-indigo-50 space-y-6">
         <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
           <span>📝</span> سجل دخول المديرين
@@ -157,18 +289,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Revenue Card */}
-      <section className="bg-slate-900 text-white p-10 rounded-[48px] shadow-2xl relative overflow-hidden">
-        <div className="relative z-10">
-          <p className="text-slate-400 text-lg font-bold mb-2">أرباح المنصة القابلة للسحب</p>
-          <p className="text-5xl font-black mb-8">{stats.platformRevenue.toLocaleString()} ج.م</p>
-          <button className="w-full bg-green-500 text-white py-5 rounded-[28px] font-black text-2xl shadow-xl shadow-green-900/40 active:scale-95 transition-all">
-            سحب الأرباح للبنك 💸
-          </button>
-        </div>
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-24 -mt-24"></div>
       </section>
 
       {/* Categories Management */}
