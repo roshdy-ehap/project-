@@ -42,7 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [tempAdminPhone, setTempAdminPhone] = useState(adminCreds.phone);
   const [tempAdminOtp, setTempAdminOtp] = useState(adminCreds.otp);
 
-  // منطق الترتيب الجديد
+  // منطق الترتيب المتقدم
   const [sortConfig, setSortConfig] = useState<{ key: SortKey, order: SortOrder }>({ 
     key: 'completedJobs', 
     order: 'desc' 
@@ -55,24 +55,23 @@ export const AdminView: React.FC<AdminViewProps> = ({
     }));
   };
 
-  // توليد بيانات أداء مستقرة بناءً على الـ ID لضمان عدم تغير الأرقام عند الترتيب
+  // توليد بيانات أداء مستقرة بناءً على الـ ID لضمان الثبات
   const providerPerformanceData = useMemo(() => {
     const providers = users
       .filter(u => u.role === 'PROVIDER')
       .map(u => {
         const p = u as unknown as Provider;
-        // استخدام طول الاسم أو الـ ID لتوليد أرقام ثابتة للمحاكاة
         const seed = u.id.length + u.name.length;
         return {
           ...p,
           completedJobs: p.completedJobs || (seed * 7) % 100 + 5,
           ratingAvg: p.rating?.average || ((seed * 3) % 20 / 10 + 3).toFixed(1),
-          cancellationRate: (seed * 11) % 20, // نسبة مئوية ثابتة
-          responseTime: (seed * 13) % 45 + 5, // بالدقائق ثابتة
+          cancellationRate: (seed * 11) % 15,
+          responseTime: (seed * 13) % 45 + 5,
         };
       });
 
-    return providers.sort((a, b) => {
+    return [...providers].sort((a, b) => {
       let valA: number;
       let valB: number;
 
@@ -84,11 +83,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         valB = Number(b[sortConfig.key as keyof typeof b]);
       }
 
-      if (sortConfig.order === 'asc') {
-        return valA - valB;
-      } else {
-        return valB - valA;
-      }
+      return sortConfig.order === 'asc' ? valA - valB : valB - valA;
     });
   }, [users, sortConfig]);
 
@@ -146,70 +141,86 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-24 -mt-24"></div>
       </section>
 
-      {/* Improved: Provider Performance Analytics Section */}
+      {/* Provider Performance Analytics Section */}
       <section className="bg-white p-8 rounded-[40px] shadow-lg border-2 border-blue-50 space-y-8">
-        <div className="flex flex-col gap-4">
-          <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-            <span>📈</span> جدول أداء الفنيين
-          </h3>
-          <p className="text-xs text-slate-400 font-bold mb-2">اضغط على المعيار للترتيب (تصاعدي/تنازلي)</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+              <span>📈</span> تتبع أداء الصنايعية
+            </h3>
+            <span className="text-[10px] text-slate-400 font-black bg-slate-50 px-3 py-1 rounded-full uppercase">Live Update</span>
+          </div>
+          
+          {/* Sorting Buttons Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 p-2 rounded-[24px] border-2 border-slate-100">
             {[
               { id: 'completedJobs', label: 'العمليات' },
               { id: 'rating', label: 'التقييم' },
               { id: 'cancellationRate', label: 'الإلغاء' },
-              { id: 'responseTime', label: 'سرعة الرد' }
+              { id: 'responseTime', label: 'الرد' }
             ].map(item => (
               <button 
                 key={item.id}
                 onClick={() => handleSort(item.id as SortKey)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${sortConfig.key === item.id ? 'bg-[#1E3A8A] text-white shadow-md' : 'bg-slate-100 text-slate-500'}`}
+                className={`flex flex-col items-center justify-center p-3 rounded-[18px] transition-all duration-300 ${sortConfig.key === item.id ? 'bg-[#1E3A8A] text-white shadow-xl scale-105' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
               >
-                {item.label}
-                {sortConfig.key === item.id && (
-                  <span>{sortConfig.order === 'desc' ? '↓' : '↑'}</span>
-                )}
+                <span className="text-[10px] font-black mb-1 opacity-70">{item.label}</span>
+                <div className="flex items-center gap-1">
+                   <span className="text-xs font-black">رتب بـ</span>
+                   {sortConfig.key === item.id && (
+                     <span className="text-lg leading-none">{sortConfig.order === 'desc' ? '↓' : '↑'}</span>
+                   )}
+                </div>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           {providerPerformanceData.map((provider) => (
-            <div key={provider.id} className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 space-y-4 hover:border-blue-200 transition-colors">
-              <div className="flex items-center gap-4">
-                <img src={provider.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+            <div key={provider.id} className="p-6 bg-slate-50 rounded-[32px] border-2 border-slate-100 space-y-5 hover:border-blue-200 hover:bg-white transition-all shadow-sm">
+              <div className="flex items-center gap-5">
+                <div className="relative">
+                  <img src={provider.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+                  {Number(provider.ratingAvg) >= 4.5 && (
+                    <div className="absolute -top-2 -right-2 bg-orange-500 text-white p-1 rounded-full border-2 border-white shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1">
-                  <h4 className="font-black text-slate-900 text-lg">{provider.name}</h4>
+                  <h4 className="font-black text-slate-900 text-lg leading-none mb-1">{provider.name}</h4>
                   <p className="text-xs text-slate-400 font-bold tracking-wider" dir="ltr">{provider.phone}</p>
                 </div>
-                <div className="flex flex-col items-end">
+                <div className={`flex flex-col items-end p-2 rounded-xl transition-colors ${sortConfig.key === 'rating' ? 'bg-orange-50' : ''}`}>
                   <div className="flex items-center gap-1 text-orange-500">
-                    <span className="font-black">{provider.ratingAvg}</span>
+                    <span className="font-black text-xl">{provider.ratingAvg}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold">متوسط التقييم</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'completedJobs' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                <div className={`p-4 rounded-2xl border-2 text-center transition-all ${sortConfig.key === 'completedJobs' ? 'bg-blue-100 border-blue-300' : 'bg-white border-slate-100'}`}>
                   <p className="text-[10px] text-slate-400 font-black mb-1">العمليات</p>
-                  <p className="text-lg font-black text-[#1E3A8A]">{provider.completedJobs}</p>
+                  <p className="text-xl font-black text-[#1E3A8A]">{provider.completedJobs}</p>
                 </div>
-                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'cancellationRate' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                <div className={`p-4 rounded-2xl border-2 text-center transition-all ${sortConfig.key === 'cancellationRate' ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
                   <p className="text-[10px] text-slate-400 font-black mb-1">الإلغاء</p>
-                  <p className={`text-lg font-black ${provider.cancellationRate > 10 ? 'text-red-500' : 'text-green-600'}`}>
+                  <p className={`text-xl font-black ${provider.cancellationRate > 10 ? 'text-red-500' : 'text-green-600'}`}>
                     {provider.cancellationRate}%
                   </p>
                 </div>
-                <div className={`p-3 rounded-2xl border text-center transition-all ${sortConfig.key === 'responseTime' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                <div className={`p-4 rounded-2xl border-2 text-center transition-all ${sortConfig.key === 'responseTime' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100'}`}>
                   <p className="text-[10px] text-slate-400 font-black mb-1">الرد (د)</p>
-                  <p className="text-lg font-black text-slate-700">{provider.responseTime}</p>
+                  <p className="text-xl font-black text-slate-700">{provider.responseTime}</p>
                 </div>
               </div>
             </div>
           ))}
+          {providerPerformanceData.length === 0 && (
+            <div className="text-center py-20 text-slate-400 font-black">لا يوجد صنايعية مسجلين بعد</div>
+          )}
         </div>
       </section>
 
@@ -243,28 +254,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
           >
             تحديث بيانات الدخول
           </button>
-        </div>
-      </section>
-
-      {/* Admin Logins Record */}
-      <section className="bg-white p-8 rounded-[40px] shadow-lg border-2 border-indigo-50 space-y-6">
-        <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-          <span>📝</span> سجل دخول المديرين
-        </h3>
-        <p className="text-sm text-slate-500 font-bold mb-4">هنا تظهر قائمة بكل مرة تم فيها استخدام الكود السري للدخول كمدير.</p>
-        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-          {adminLogs.map(log => (
-            <div key={log.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="font-black text-indigo-700 text-sm">{log.action}</span>
-                <span className="text-[10px] text-slate-400 font-bold">{log.timestamp}</span>
-              </div>
-              <p className="text-xs text-slate-600 font-bold">{log.details}</p>
-            </div>
-          ))}
-          {adminLogs.length === 0 && (
-            <p className="text-center py-4 text-slate-400 font-bold">لا توجد سجلات دخول بعد</p>
-          )}
         </div>
       </section>
 
