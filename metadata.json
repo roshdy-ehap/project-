@@ -1,0 +1,8 @@
+{
+  "name": "Copy of صنايعيتي - Sana'eyeti",
+  "description": "تطبيق لربط الفنيين الموثوقين بالعملاء في مصر مع نظام دفع آمن وضمان جودة الخدمة.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
