@@ -1,92 +1,124 @@
 
 import React, { useState } from 'react';
-import { Provider } from '../types';
+import { Provider, User } from '../types';
 
 const MOCK_PROVIDERS: Provider[] = [
-  { id: 'p1', name: 'الأسطى محمد - كهربائي', phone: '011', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p1/200', bio: 'خبرة ١٠ سنوات في أعمال تأسيس وصيانة الكهرباء.', services: ['كهرباء'], rating: 4.8, completedJobs: 124, hourlyRate: 150, isVerified: true, location: { lat: 30.0444, lng: 31.2357 } },
-  { id: 'p2', name: 'الأسطى علي - سباك', phone: '012', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p2/200', bio: 'متخصص في إصلاح التسريبات وتركيب الأدوات الصحية.', services: ['سباكة'], rating: 4.5, completedJobs: 89, hourlyRate: 120, isVerified: true, location: { lat: 30.0500, lng: 31.2400 } },
-  { id: 'p3', name: 'الأسطى هاني - نجار', phone: '015', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p3/200', bio: 'تصميم وتنفيذ غرف وفك وتركيب الموبيليا.', services: ['نجارة'], rating: 4.9, completedJobs: 210, hourlyRate: 200, isVerified: true, location: { lat: 30.0400, lng: 31.2300 } },
+  { 
+    id: 'p1', name: 'الأسطى محمد أحمد', phone: '011', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p1/200', 
+    bio: 'خبرة ١٠ سنوات في أعمال تأسيس وصيانة الكهرباء بمدينة نصر.', services: ['كهرباء'], 
+    rating: { average: 4.8, count: 127, breakdown: { 5: 98, 4: 22, 3: 5, 2: 1, 1: 1 } },
+    completedJobs: 156, hourlyRate: 200, isVerified: true, location: { lat: 30.0444, lng: 31.2357 }, walletBalance: 450 
+  },
+  { 
+    id: 'p2', name: 'الأسطى علي حسن', phone: '012', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p2/200', 
+    bio: 'متخصص في إصلاح التسريبات وتركيب الأدوات الصحية الحديثة.', services: ['سباكة'], 
+    rating: { average: 4.5, count: 89, breakdown: { 5: 60, 4: 15, 3: 10, 2: 2, 1: 2 } },
+    completedJobs: 89, hourlyRate: 180, isVerified: true, location: { lat: 30.0500, lng: 31.2400 }, walletBalance: 120 
+  },
+  { 
+    id: 'p3', name: 'الأسطى هاني - نجار', phone: '015', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p3/200', 
+    bio: 'فك وتركيب موبيليا وتصليح أبواب وشبابيك بسرعه ودقة.', services: ['نجارة'], 
+    rating: { average: 4.9, count: 210, breakdown: { 5: 180, 4: 20, 3: 10, 2: 0, 1: 0 } },
+    completedJobs: 210, hourlyRate: 150, isVerified: true, location: { lat: 30.0400, lng: 31.2300 }, walletBalance: 890 
+  },
 ];
 
-export const ExploreView: React.FC = () => {
+interface ExploreViewProps {
+  onBook: (provider: Provider) => void;
+  currentUser: User;
+}
+
+export const ExploreView: React.FC<ExploreViewProps> = ({ onBook, currentUser }) => {
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const isProvider = currentUser.role === 'PROVIDER';
 
   return (
-    <div className="h-full flex flex-col relative">
-      {/* Search Bar */}
+    <div className="h-full flex flex-col relative bg-slate-100 overflow-hidden">
+      {/* Header Info */}
       <div className="p-4 absolute top-0 left-0 right-0 z-10 pointer-events-none">
-        <div className="bg-white shadow-lg rounded-xl flex items-center px-4 py-2 border border-slate-100 pointer-events-auto">
-          <svg className="text-slate-400 mr-2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input
-            type="text"
-            placeholder="ابحث عن سباك، كهربائي..."
-            className="w-full bg-transparent outline-none text-slate-700 font-bold py-1"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="bg-white/90 backdrop-blur shadow-lg rounded-[24px] px-6 py-4 border border-white/50 pointer-events-auto flex items-center justify-between">
+           <div>
+             <h4 className="font-black text-slate-800 text-sm">{isProvider ? 'وضع الصنايعي' : 'اكتشف الصنايعية'}</h4>
+             <p className="text-[10px] text-slate-500 font-bold">{isProvider ? 'ترى زملائك في المهنة حولك' : 'ابحث عن أقرب فني لموقعك'}</p>
+           </div>
+           <div className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] font-black">
+             موقعك نشط 📍
+           </div>
         </div>
       </div>
 
-      {/* Mock Map Background */}
-      <div className="flex-1 bg-slate-200 relative overflow-hidden flex items-center justify-center">
-        <div className="text-slate-400 text-center select-none">
-          <p className="text-lg font-bold">خريطة تفاعلية للحي الخاص بك</p>
-          <p className="text-sm">(تظهر هنا خريطة جوجل)</p>
-        </div>
+      {/* Map Content */}
+      <div className="flex-1 bg-slate-200 relative overflow-hidden">
+        {/* Fake Map Elements */}
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.google.com/maps/about/images/home/home-maps-icon.svg')] bg-repeat bg-[length:100px]"></div>
         
-        {/* Mock Map Markers */}
         {MOCK_PROVIDERS.map(p => (
           <button
             key={p.id}
             onClick={() => setSelectedProvider(p)}
-            className="absolute p-2 bg-white rounded-full shadow-xl border-2 border-blue-600 animate-bounce active:scale-90 transition-transform"
+            className={`absolute pointer-events-auto p-1.5 bg-white rounded-full shadow-2xl border-2 ${isProvider ? 'border-[#F97316]' : 'border-[#1E3A8A]'} hover:scale-110 active:scale-90 transition-all z-20 animate-bounce`}
             style={{ 
-              top: `${40 + (p.location.lat - 30.0444) * 500}%`, 
-              left: `${50 + (p.location.lng - 31.2357) * 500}%` 
+              top: `${45 + (p.location.lat - 30.0444) * 1500}%`, 
+              left: `${50 + (p.location.lng - 31.2357) * 1500}%` 
             }}
           >
-            <img src={p.avatar} alt={p.name} className="w-8 h-8 rounded-full" />
+            <div className="relative">
+              <img src={p.avatar} alt={p.name} className="w-14 h-14 rounded-full object-cover" />
+              <div className={`absolute -bottom-1 -right-1 ${isProvider ? 'bg-[#F97316]' : 'bg-[#1E3A8A]'} text-white w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold`}>
+                {isProvider ? '🤝' : '⭐'}
+              </div>
+            </div>
           </button>
         ))}
+
+        {/* User Location Marker */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <div className="w-10 h-10 bg-[#1E3A8A]/20 rounded-full flex items-center justify-center animate-pulse">
+            <div className="w-5 h-5 bg-[#1E3A8A] rounded-full border-2 border-white shadow-xl"></div>
+          </div>
+        </div>
       </div>
 
-      {/* Provider Preview Card (Popup) */}
+      {/* Provider Details Card */}
       {selectedProvider && (
-        <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-2xl border border-slate-100 animate-slide-up animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex items-start gap-3">
-            <img src={selectedProvider.avatar} alt="" className="w-16 h-16 rounded-xl object-cover" />
+        <div className="absolute bottom-6 left-4 right-4 bg-white rounded-[40px] p-6 shadow-2xl border border-slate-100 animate-in slide-in-from-bottom-10 duration-500 z-30">
+          <div className="flex items-start gap-5">
+            <div className="relative">
+              <img src={selectedProvider.avatar} alt="" className="w-24 h-24 rounded-[32px] object-cover shadow-xl border-4 border-white" />
+              {selectedProvider.isVerified && (
+                <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+              )}
+            </div>
             <div className="flex-1">
-              <div className="flex justify-between">
-                <h4 className="font-bold text-slate-800">{selectedProvider.name}</h4>
-                <div className="flex items-center gap-1 text-orange-500 font-bold">
-                  <span>{selectedProvider.rating}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <div className="flex justify-between items-start">
+                <h4 className="font-black text-slate-800 text-xl leading-tight">{selectedProvider.name}</h4>
+                <div className="flex items-center gap-1.5 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-2xl font-black text-sm">
+                  <span>{selectedProvider.rating.average}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
               </div>
-              <p className="text-xs text-slate-500 line-clamp-2 mt-1">{selectedProvider.bio}</p>
-              <div className="flex items-center gap-3 mt-3">
-                <div className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">
-                  {selectedProvider.completedJobs} طلب مكتمل
-                </div>
-                <div className="text-blue-600 font-bold text-sm">
-                  {selectedProvider.hourlyRate} ج.م / ساعة
-                </div>
+              <p className="text-xs text-slate-500 mt-2 font-bold line-clamp-2 leading-relaxed">{selectedProvider.bio}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                 <span className="text-[10px] bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-black">⭐ {selectedProvider.rating.count} تقييم</span>
+                 <span className="text-[10px] bg-green-50 text-green-600 px-3 py-1 rounded-full font-black">+{selectedProvider.completedJobs} خدمة</span>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-4 mt-6">
             <button 
               onClick={() => setSelectedProvider(null)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold"
+              className="px-6 py-4 bg-slate-50 text-slate-400 rounded-3xl font-black text-sm active:scale-95 transition-all"
             >
-              إغلاق
+              إلغاء
             </button>
             <button 
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold shadow-md shadow-blue-200 active:scale-95"
-              onClick={() => alert('سيتم التواصل مع الفني للمقابلة وحجز الخدمة')}
+              className={`px-6 py-4 ${isProvider ? 'bg-[#F97316]' : 'bg-[#1E3A8A]'} text-white rounded-3xl font-black text-sm shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2`}
+              onClick={() => onBook(selectedProvider)}
             >
-              مقابلة وحجز
+              <span>{isProvider ? 'تواصل للتعاون' : 'مقابلة وحجز'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
           </div>
         </div>

@@ -2,72 +2,90 @@
 import React from 'react';
 
 const CATEGORIES = [
-  { id: 'plumbing', name: 'سباكة', icon: '🚰', color: 'bg-blue-100 text-blue-600' },
-  { id: 'electrical', name: 'كهرباء', icon: '⚡', color: 'bg-yellow-100 text-yellow-600' },
-  { id: 'carpentry', name: 'نجارة', icon: '🪚', color: 'bg-orange-100 text-orange-600' },
-  { id: 'painting', name: 'نقاشة', icon: '🎨', color: 'bg-purple-100 text-purple-600' },
-  { id: 'ac', name: 'تكييف', icon: '❄️', color: 'bg-cyan-100 text-cyan-600' },
-  { id: 'cleaning', name: 'تنظيف', icon: '🧹', color: 'bg-green-100 text-green-600' },
+  { id: 'plumbing', name: 'سباكة', icon: '🚰', color: 'bg-blue-100 text-blue-900' },
+  { id: 'electrical', name: 'كهرباء', icon: '⚡', color: 'bg-yellow-100 text-yellow-900' },
+  { id: 'carpentry', name: 'نجارة', icon: '🪚', color: 'bg-orange-100 text-orange-900' },
+  { id: 'painting', name: 'نقاشة', icon: '🎨', color: 'bg-purple-100 text-purple-900' },
+  { id: 'ac', name: 'تكييف', icon: '❄️', color: 'bg-cyan-100 text-cyan-900' },
+  { id: 'cleaning', name: 'تنظيف', icon: '🧹', color: 'bg-green-100 text-green-900' },
 ];
 
 export const HomeView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   return (
-    <div className="p-4 space-y-6">
-      {/* Banner */}
-      <div className="bg-gradient-to-l from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
-        <div className="relative z-10">
-          <h2 className="text-2xl font-bold mb-2">محتاج صنايعي؟</h2>
-          <p className="text-blue-100 mb-4">اطلب الآن وادفع بأمان داخل التطبيق</p>
-          <button 
-            onClick={() => onNavigate('explore')}
-            className="bg-white text-blue-700 px-6 py-2 rounded-full font-bold shadow-md active:scale-95 transition-transform"
-          >
-            اكتشف الفنيين حولك
-          </button>
-        </div>
-        <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
+    <div className="p-6 space-y-10 bg-[#F8FAFC] min-h-full">
+      {/* Search Bar - High Contrast & Larger */}
+      <div className="bg-white p-4 rounded-2xl shadow-lg border-2 border-slate-200 flex items-center gap-4 px-6">
+        <span className="text-slate-600 text-2xl">🔍</span>
+        <input 
+          type="text" 
+          placeholder="إيه الخدمة اللي محتاجها؟" 
+          className="flex-1 py-1 bg-transparent outline-none text-xl font-bold text-slate-900 placeholder:text-slate-400" 
+        />
       </div>
 
-      {/* Categories Grid */}
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-slate-800">الأقسام</h3>
-          <button className="text-blue-600 text-sm font-bold">عرض الكل</button>
+      {/* Hero Banner - Vibrant & Extra Clear */}
+      <div className="bg-[#1E3A8A] rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-4xl font-black mb-4 leading-tight">بيتك فـي أيدي أمينة</h2>
+          <p className="text-blue-50 text-xl mb-8 font-bold leading-relaxed opacity-95">اطلب صنايعي موثوق بضمان "صنايعي"، وادفع بأمان داخل التطبيق.</p>
+          <button 
+            onClick={() => onNavigate('explore')}
+            className="bg-[#F97316] text-white px-12 py-4 rounded-2xl font-black text-xl shadow-2xl active:scale-95 transition-all hover:bg-orange-600 border-b-4 border-orange-800"
+          >
+            اطلب دلوقتي
+          </button>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="absolute top-0 right-0 p-4 opacity-10 text-[120px]">🛠️</div>
+      </div>
+
+      {/* Categories Grid - Better Readability */}
+      <section>
+        <div className="flex justify-between items-end mb-8 px-2">
+          <h3 className="text-3xl font-black text-slate-900 tracking-tight">الأقسام</h3>
+          <button className="text-[#1E3A8A] text-lg font-black border-b-4 border-blue-100 pb-1">عرض الكل</button>
+        </div>
+        <div className="grid grid-cols-2 gap-6">
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
               onClick={() => onNavigate('explore')}
-              className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl shadow-sm border border-slate-100 active:bg-slate-50 transition-colors"
+              className="group flex flex-col items-center gap-4 p-6 bg-white rounded-[32px] shadow-md border-2 border-slate-100 active:scale-95 transition-all hover:shadow-xl hover:border-blue-300"
             >
-              <div className={`w-12 h-12 ${cat.color} rounded-full flex items-center justify-center text-2xl`}>
+              <div className={`w-20 h-20 ${cat.color} rounded-[28px] flex items-center justify-center text-4xl shadow-sm group-hover:scale-110 transition-transform`}>
                 {cat.icon}
               </div>
-              <span className="text-sm font-bold text-slate-700">{cat.name}</span>
+              <span className="text-xl font-black text-slate-900">{cat.name}</span>
             </button>
           ))}
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="bg-white p-4 rounded-2xl border border-slate-100">
-        <h3 className="text-lg font-bold text-slate-800 mb-3">ليه تستخدم صنايعيتي؟</h3>
-        <ul className="space-y-3">
-          <li className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">✅</div>
-            <span className="text-sm text-slate-600">هوية موثقة لكل الصنايعية</span>
-          </li>
-          <li className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">💳</div>
-            <span className="text-sm text-slate-600">دفع آمن والمبلغ محفوظ لحين الانتهاء</span>
-          </li>
-          <li className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">⚖️</div>
-            <span className="text-sm text-slate-600">دعم فني وضمان ضد العيوب</span>
-          </li>
-        </ul>
+      {/* Trust Badges - Extra Clear Text */}
+      <section className="bg-white p-8 rounded-[40px] border-2 border-slate-200 shadow-lg space-y-8">
+        <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+          <span className="text-blue-600 text-3xl">🛡️</span> ليه تختار "صنايعي"؟
+        </h3>
+        <div className="space-y-8">
+          <div className="flex items-start gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-800 flex items-center justify-center text-3xl shadow-sm shrink-0 font-black">💵</div>
+            <div>
+              <p className="font-black text-slate-900 text-xl mb-2">ضمان أمان فلوسك</p>
+              <p className="text-lg text-slate-700 font-bold leading-relaxed">المبلغ بيتحجز عندنا، ومش بيوصل للصنايعي إلا لما تأكد إن الشغل خلص تمام.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-800 flex items-center justify-center text-3xl shadow-sm shrink-0 font-black">✅</div>
+            <div>
+              <p className="font-black text-slate-900 text-xl mb-2">فنيين معتمدين</p>
+              <p className="text-lg text-slate-700 font-bold leading-relaxed">كل فني بيتم مراجعته وتوثيق هويته ببطاقة الرقم القومي لضمان أمان بيتك.</p>
+            </div>
+          </div>
+        </div>
       </section>
+
+      <div className="pb-12 text-center">
+        <p className="text-lg text-slate-400 font-black">صنايعي - الإصدار 1.0.0</p>
+      </div>
     </div>
   );
 };

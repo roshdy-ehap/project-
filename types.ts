@@ -7,12 +7,17 @@ export interface User {
   phone: string;
   role: UserRole;
   avatar: string;
+  walletBalance: number;
 }
 
 export interface Provider extends User {
   bio: string;
   services: string[];
-  rating: number;
+  rating: {
+    average: number;
+    count: number;
+    breakdown: Record<number, number>;
+  };
   completedJobs: number;
   hourlyRate: number;
   isVerified: boolean;
@@ -24,12 +29,21 @@ export interface Provider extends User {
 
 export enum JobStatus {
   PENDING = 'PENDING',
-  INTERVIEWING = 'INTERVIEWING',
-  DEPOSIT_PAID = 'DEPOSIT_PAID',
+  INTERVIEWING = 'INTERVIEWING', // مرحلة المقابلة والمعاينة
+  ESTIMATE_PROVIDED = 'ESTIMATE_PROVIDED', // تم تقديم عرض سعر نهائي بعد المعاينة
+  DEPOSIT_PAID = 'DEPOSIT_PAID', // المبلغ محجوز في النظام (Escrow)
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
   DISPUTED = 'DISPUTED'
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+  isSystem?: boolean;
 }
 
 export interface Job {
@@ -41,4 +55,5 @@ export interface Job {
   price: number;
   createdAt: string;
   description: string;
+  messages: Message[];
 }

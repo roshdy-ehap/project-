@@ -6,7 +6,7 @@ interface Stats {
   activeProviders: number;
   pendingVerifications: number;
   activeDisputes: number;
-  totalRevenue: number;
+  platformRevenue: number;
 }
 
 export const AdminView: React.FC = () => {
@@ -16,108 +16,84 @@ export const AdminView: React.FC = () => {
     activeProviders: 85,
     pendingVerifications: 12,
     activeDisputes: 3,
-    totalRevenue: 45200
+    platformRevenue: 12450.50
   });
 
   return (
-    <div className="p-4 space-y-6 pb-24">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">لوحة تحكم الإدارة</h2>
-        <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
-          تنبيه: {stats.activeDisputes} نزاعات نشطة
+    <div className="p-4 space-y-6 pb-24 bg-slate-50 min-h-full">
+      <div className="flex items-center justify-between border-r-8 border-red-600 pr-4 py-1">
+        <h2 className="text-2xl font-black text-slate-800">لوحة التحكم</h2>
+        <span className="bg-red-100 text-red-600 text-[10px] font-black px-3 py-1.5 rounded-full animate-pulse shadow-sm">
+          {stats.activeDisputes} نزاعات جارية
         </span>
       </div>
 
+      {/* Revenue Card */}
+      <section className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden">
+        <div className="relative z-10">
+          <p className="text-slate-400 text-sm font-bold mb-1">أرباح المنصة القابلة للسحب</p>
+          <p className="text-4xl font-black mb-6">{stats.platformRevenue.toLocaleString()} ج.م</p>
+          <button className="w-full bg-green-500 text-white py-4 rounded-[24px] font-black text-lg shadow-xl shadow-green-900/40 active:scale-95 transition-all">
+            سحب الأرباح للبنك 💸
+          </button>
+        </div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+      </section>
+
+      {/* Commission Control */}
+      <section className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 space-y-5">
+        <div className="flex justify-between items-center">
+          <h3 className="font-black text-slate-800 flex items-center gap-2">
+            <span>⚙️</span> نسبة العمولة
+          </h3>
+          <span className="text-2xl font-black text-[#1E3A8A]">{commission}%</span>
+        </div>
+        <input 
+          type="range" 
+          min="5" 
+          max="30" 
+          value={commission} 
+          onChange={(e) => setCommission(parseInt(e.target.value))}
+          className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#1E3A8A]"
+        />
+        <p className="text-[10px] text-slate-400 font-bold text-center">العمولة تطبق تلقائياً على كل عملية دفع ناجحة</p>
+      </section>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-          <p className="text-xs text-slate-400 mb-1">إجمالي الإيرادات</p>
-          <p className="text-lg font-bold text-blue-600">{stats.totalRevenue.toLocaleString()} ج.م</p>
+        <div className="bg-white p-5 rounded-[32px] shadow-sm border border-slate-100">
+          <p className="text-[10px] text-slate-400 font-black mb-1">توثيق معلق</p>
+          <p className="text-2xl font-black text-orange-600">{stats.pendingVerifications}</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-          <p className="text-xs text-slate-400 mb-1">الصنايعية النشطين</p>
-          <p className="text-lg font-bold text-slate-800">{stats.activeProviders}</p>
+        <div className="bg-white p-5 rounded-[32px] shadow-sm border border-slate-100">
+          <p className="text-[10px] text-slate-400 font-black mb-1">الفنيين النشطين</p>
+          <p className="text-2xl font-black text-[#1E3A8A]">{stats.activeProviders}</p>
         </div>
       </div>
 
-      {/* Commission Control */}
-      <section className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span>⚙️</span> إعدادات العمولة
-        </h3>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-slate-600">نسبة التطبيق الحالية</span>
-            <span className="font-bold text-blue-600">{commission}%</span>
+      {/* Disputed Orders */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-black text-slate-800 px-1">إدارة النزاعات ⚖️</h3>
+        <div className="bg-white rounded-[32px] border border-red-100 overflow-hidden shadow-sm">
+          <div className="p-4 bg-red-50/50 text-red-700 text-xs font-black flex justify-between items-center">
+            <span>طلب #ORD-9902 (سباكة)</span>
+            <span className="bg-white px-2 py-1 rounded-lg">عاجل</span>
           </div>
-          <input 
-            type="range" 
-            min="5" 
-            max="30" 
-            value={commission} 
-            onChange={(e) => setCommission(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-          <button className="w-full bg-blue-600 text-white py-2 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
-            حفظ التعديلات
-          </button>
-        </div>
-      </section>
-
-      {/* Pending Verifications */}
-      <section>
-        <h3 className="font-bold text-slate-800 mb-3 flex items-center justify-between">
-          <span>🆔 توثيق الهوية</span>
-          <span className="text-xs text-blue-600 font-bold">{stats.pendingVerifications} طلب</span>
-        </h3>
-        <div className="space-y-3">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-200 rounded-full"></div>
-                <div>
-                  <p className="text-sm font-bold text-slate-700">الأسطى محمود سعيد</p>
-                  <p className="text-[10px] text-slate-400">سباك • مقدم منذ ساعتين</p>
-                </div>
-              </div>
-              <button className="text-blue-600 text-xs font-bold border border-blue-600 px-3 py-1 rounded-lg">
-                مراجعة
-              </button>
+          <div className="p-5 space-y-4">
+            <div className="space-y-2">
+              <p className="text-xs text-slate-700 leading-relaxed font-bold">
+                <span className="text-blue-600">العميل:</span> الفني لم يكمل تركيب الخلاط وطلب مبلغ إضافي خارج التطبيق.
+              </p>
+              <p className="text-xs text-slate-700 leading-relaxed font-bold">
+                <span className="text-orange-600">الفني:</span> الماسورة مكسورة وتحتاج تغيير كامل، وهذا خارج السعر المتفق عليه.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Dispute Management */}
-      <section>
-        <h3 className="font-bold text-slate-800 mb-3">⚖️ النزاعات الحالية</h3>
-        <div className="bg-white rounded-2xl border border-red-100 overflow-hidden">
-          <div className="p-3 bg-red-50 text-red-700 text-xs font-bold flex justify-between">
-            <span>طلب #4492 - سباكة</span>
-            <span>بانتظار الإدارة</span>
-          </div>
-          <div className="p-3 space-y-2">
-            <p className="text-xs text-slate-600 leading-relaxed">
-              <strong>العميل:</strong> السباك لم يكمل تركيب الخلاط وطلب مبلغ إضافي.
-            </p>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              <strong>الفني:</strong> الخلاط قديم جداً ويحتاج قطع غيار غير متوفرة.
-            </p>
-            <div className="flex gap-2 mt-2">
-              <button className="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold">رد المبلغ للعميل</button>
-              <button className="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg text-xs font-bold">تحويل للفني</button>
+            <div className="flex gap-3">
+              <button className="flex-1 bg-red-600 text-white py-3 rounded-2xl text-[10px] font-black shadow-lg shadow-red-100">رد المبلغ للعميل</button>
+              <button className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl text-[10px] font-black">تحويل للفني</button>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Withdraw Profits */}
-      <section className="bg-slate-800 text-white p-5 rounded-2xl shadow-xl">
-        <h3 className="font-bold mb-1">أرباح المنصة القابلة للسحب</h3>
-        <p className="text-2xl font-bold mb-4">12,450.00 ج.م</p>
-        <button className="w-full bg-green-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-green-900/20 active:scale-95 transition-transform">
-          سحب الأرباح للحساب البنكي
-        </button>
       </section>
     </div>
   );
