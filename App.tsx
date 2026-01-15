@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HomeView } from './views/HomeView';
 import { ExploreView } from './views/ExploreView';
 import { BookingsView } from './views/BookingsView';
@@ -100,20 +100,6 @@ const App: React.FC = () => {
       ]
     };
     
-    if (currentUser?.role === 'CUSTOMER') {
-      setTimeout(() => {
-        setJobs(prev => prev.map(j => j.id === newJob.id ? { 
-          ...j, 
-          status: JobStatus.ESTIMATE_PROVIDED,
-          quoteItems: [
-            { id: 'e1', label: 'مصنعية تأسيس', amount: 200, type: 'LABOR' },
-            { id: 'e2', label: 'خامات ومواسير', amount: 150, type: 'MATERIAL' }
-          ],
-          price: 350
-        } : j));
-      }, 5000);
-    }
-
     setJobs([newJob, ...jobs]);
     setActiveTab('bookings');
   };
@@ -122,19 +108,11 @@ const App: React.FC = () => {
     setJobs(jobs.map(j => j.id === jobId ? { ...j, ...extraData, status: newStatus } : j));
   };
 
-  if (!currentUser) {
-    return (
-      <div className="w-full h-full md:max-w-md md:h-[90vh] md:rounded-[40px] md:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] bg-white overflow-hidden">
-        <LoginView onLogin={handleLogin} adminCreds={adminCreds} />
-      </div>
-    );
-  }
-
   const renderView = () => {
     switch (activeTab) {
       case 'home': return <HomeView onNavigate={setActiveTab} categories={categories} />;
-      case 'explore': return <ExploreView onBook={handleCreateJob} currentUser={currentUser} />;
-      case 'bookings': return <BookingsView jobs={jobs} updateStatus={updateJobStatus} currentUser={currentUser} />;
+      case 'explore': return <ExploreView onBook={handleCreateJob} currentUser={currentUser!} />;
+      case 'bookings': return <BookingsView jobs={jobs} updateStatus={updateJobStatus} currentUser={currentUser!} />;
       case 'profile': return <ProfileView user={currentUser} onLogout={handleLogout} />;
       case 'admin': return <AdminView 
         categories={categories} 
@@ -150,13 +128,21 @@ const App: React.FC = () => {
     }
   };
 
+  const containerClasses = "flex flex-col h-full w-full bg-slate-50 relative overflow-hidden md:max-w-[420px] md:h-[880px] md:max-h-[95vh] md:rounded-[50px] md:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] md:border-[12px] md:border-slate-900 shadow-2xl transition-all duration-500 ease-in-out";
+
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 relative overflow-hidden md:max-w-md md:h-[90vh] md:rounded-[40px] md:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] md:border-8 md:border-slate-800">
-      <Header />
-      <main className="flex-1 overflow-y-auto pb-24 scroll-smooth">
-        {renderView()}
-      </main>
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={currentUser?.role === 'ADMIN'} />
+    <div className={containerClasses}>
+      {!currentUser ? (
+        <LoginView onLogin={handleLogin} adminCreds={adminCreds} />
+      ) : (
+        <>
+          <Header />
+          <main className="flex-1 overflow-y-auto pb-24 scroll-smooth overscroll-contain">
+            {renderView()}
+          </main>
+          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={currentUser?.role === 'ADMIN'} />
+        </>
+      )}
     </div>
   );
 };
