@@ -1,19 +1,16 @@
 
 import React from 'react';
+import { Category } from '../App';
 
-const CATEGORIES = [
-  { id: 'plumbing', name: 'سباكة', icon: '🚰', color: 'bg-blue-100 text-blue-900' },
-  { id: 'electrical', name: 'كهرباء', icon: '⚡', color: 'bg-yellow-100 text-yellow-900' },
-  { id: 'carpentry', name: 'نجارة', icon: '🪚', color: 'bg-orange-100 text-orange-900' },
-  { id: 'painting', name: 'نقاشة', icon: '🎨', color: 'bg-purple-100 text-purple-900' },
-  { id: 'ac', name: 'تكييف', icon: '❄️', color: 'bg-cyan-100 text-cyan-900' },
-  { id: 'cleaning', name: 'تنظيف', icon: '🧹', color: 'bg-green-100 text-green-900' },
-];
+interface HomeViewProps {
+  onNavigate: (tab: string) => void;
+  categories: Category[];
+}
 
-export const HomeView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, categories }) => {
   return (
     <div className="p-6 space-y-10 bg-[#F8FAFC] min-h-full">
-      {/* Search Bar - High Contrast & Larger */}
+      {/* Search Bar */}
       <div className="bg-white p-4 rounded-2xl shadow-lg border-2 border-slate-200 flex items-center gap-4 px-6">
         <span className="text-slate-600 text-2xl">🔍</span>
         <input 
@@ -23,7 +20,7 @@ export const HomeView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
         />
       </div>
 
-      {/* Hero Banner - Vibrant & Extra Clear */}
+      {/* Hero Banner */}
       <div className="bg-[#1E3A8A] rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-4xl font-black mb-4 leading-tight">بيتك فـي أيدي أمينة</h2>
@@ -38,14 +35,14 @@ export const HomeView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
         <div className="absolute top-0 right-0 p-4 opacity-10 text-[120px]">🛠️</div>
       </div>
 
-      {/* Categories Grid - Better Readability */}
+      {/* Categories Grid */}
       <section>
         <div className="flex justify-between items-end mb-8 px-2">
           <h3 className="text-3xl font-black text-slate-900 tracking-tight">الأقسام</h3>
           <button className="text-[#1E3A8A] text-lg font-black border-b-4 border-blue-100 pb-1">عرض الكل</button>
         </div>
         <div className="grid grid-cols-2 gap-6">
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => onNavigate('explore')}
@@ -60,7 +57,7 @@ export const HomeView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
         </div>
       </section>
 
-      {/* Trust Badges - Extra Clear Text */}
+      {/* Trust Badges */}
       <section className="bg-white p-8 rounded-[40px] border-2 border-slate-200 shadow-lg space-y-8">
         <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
           <span className="text-blue-600 text-3xl">🛡️</span> ليه تختار "صنايعي"؟

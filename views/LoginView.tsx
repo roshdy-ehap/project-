@@ -4,9 +4,10 @@ import { User, UserRole } from '../types';
 
 interface LoginViewProps {
   onLogin: (user: User) => void;
+  adminCreds: { phone: string; otp: string };
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLogin, adminCreds }) => {
   const [step, setStep] = useState<'role' | 'phone' | 'otp'>('role');
   const [role, setRole] = useState<UserRole>('CUSTOMER');
   const [phone, setPhone] = useState('');
@@ -14,8 +15,22 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // استخدام بيانات المدير الديناميكية
+    if (phone === adminCreds.phone && otp === adminCreds.otp) {
+      onLogin({
+        id: 'super-admin',
+        name: 'مدير النظام الأعلى',
+        phone: phone,
+        role: 'ADMIN',
+        avatar: 'https://ui-avatars.com/api/?name=Admin&background=0f172a&color=fff',
+        walletBalance: 99999
+      });
+      return;
+    }
+
     onLogin({
-      id: 'u' + Math.random().toString(36).substr(2, 9),
+      id: 'user-' + Math.random().toString(36).substr(2, 9),
       name: role === 'CUSTOMER' ? 'أحمد محمد' : 'الأسطى محمد أحمد',
       phone: phone,
       role: role,
@@ -27,17 +42,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-[#F8FAFC]">
       <div className="w-full max-w-sm space-y-12">
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-28 h-28 bg-[#1E3A8A] rounded-[40px] shadow-2xl text-white text-6xl font-black mb-6">
-            ص
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center justify-center w-32 h-32 bg-[#1E3A8A] rounded-[48px] shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
+            {/* New Large Brand Logo */}
+            <svg viewBox="0 0 24 24" fill="none" className="w-20 h-20 text-white" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <path d="M14.5 12.5l-5 5" stroke="#F97316" strokeWidth="2.5" />
+              <circle cx="14.5" cy="12.5" r="1.2" fill="#F97316" stroke="none" />
+              <path d="M9.5 17.5l-1.5 1.5" stroke="#F97316" strokeWidth="2.5" />
+            </svg>
           </div>
-          <h1 className="text-5xl font-black text-slate-900 tracking-tight">صنايعي</h1>
-          <p className="text-2xl text-slate-600 font-bold opacity-80">خدماتك المنزلية في أمان</p>
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black text-slate-900 tracking-tight">صنايعيتي</h1>
+            <p className="text-xl text-[#F97316] font-black tracking-[0.2em] uppercase opacity-90">Sana'eyeti</p>
+            <p className="text-2xl text-slate-500 font-bold opacity-80 pt-2">خدماتك المنزلية في أمان</p>
+          </div>
         </div>
 
         {step === 'role' && (
           <div className="space-y-6 animate-in fade-in zoom-in duration-500">
-             <p className="text-center font-black text-2xl text-slate-800 mb-8">من أنت؟</p>
+             <p className="text-center font-black text-2xl text-slate-800 mb-6">من أنت؟</p>
              <button 
                onClick={() => { setRole('CUSTOMER'); setStep('phone'); }}
                className="w-full p-8 bg-white border-4 border-slate-100 rounded-[40px] flex items-center gap-6 hover:border-[#1E3A8A] transition-all shadow-xl group"
@@ -79,6 +103,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
               </div>
             </div>
             <button className="w-full py-6 bg-[#1E3A8A] text-white rounded-[32px] font-black text-2xl shadow-2xl active:scale-95 transition-all border-b-8 border-blue-900">إرسال كود التفعيل</button>
+            <button type="button" onClick={() => setStep('role')} className="w-full text-slate-400 font-black">رجوع</button>
           </form>
         )}
 
@@ -94,9 +119,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 onChange={(e) => setOtp(e.target.value)}
                 required
               />
-              <p className="text-lg text-center text-slate-500 mt-6 font-bold">جرب الكود <span className="text-[#1E3A8A] font-black underline">1234</span> للدخول</p>
+              <p className="text-lg text-center text-slate-500 mt-6 font-bold">أدخل كود التحقق المرسل لموبايلك</p>
             </div>
             <button className="w-full py-6 bg-[#1E3A8A] text-white rounded-[32px] font-black text-2xl shadow-2xl active:scale-95 transition-all border-b-8 border-blue-900">تأكيد والدخول</button>
+            <button type="button" onClick={() => setStep('phone')} className="w-full text-slate-400 font-black">رجوع</button>
           </form>
         )}
       </div>

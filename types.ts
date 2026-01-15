@@ -46,6 +46,13 @@ export interface Message {
   isSystem?: boolean;
 }
 
+export interface QuoteItem {
+  id: string;
+  label: string;
+  amount: number;
+  type: 'LABOR' | 'MATERIAL' | 'OTHER';
+}
+
 export interface Job {
   id: string;
   customerId: string;
@@ -56,4 +63,5 @@ export interface Job {
   createdAt: string;
   description: string;
   messages: Message[];
+  quoteItems?: QuoteItem[]; // بنود عرض السعر التفصيلي
 }

@@ -10,9 +10,43 @@ import { BottomNav } from './components/BottomNav';
 import { Header } from './components/Header';
 import { User, UserRole, Job, JobStatus, Provider } from './types';
 
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface AdminLog {
+  id: string;
+  timestamp: string;
+  action: string;
+  details: string;
+}
+
+const INITIAL_CATEGORIES: Category[] = [
+  { id: 'plumbing', name: 'سباكة', icon: '🚰', color: 'bg-blue-100 text-blue-900' },
+  { id: 'electrical', name: 'كهرباء', icon: '⚡', color: 'bg-yellow-100 text-yellow-900' },
+  { id: 'carpentry', name: 'نجارة', icon: '🪚', color: 'bg-orange-100 text-orange-900' },
+  { id: 'painting', name: 'نقاشة', icon: '🎨', color: 'bg-purple-100 text-purple-900' },
+  { id: 'ac', name: 'تكييف', icon: '❄️', color: 'bg-cyan-100 text-cyan-900' },
+  { id: 'cleaning', name: 'تنظيف', icon: '🧹', color: 'bg-green-100 text-green-900' },
+];
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [commission, setCommission] = useState(15);
+  const [adminCreds, setAdminCreds] = useState({ phone: '01111111111', otp: '0000' });
+  const [adminLogs, setAdminLogs] = useState<AdminLog[]>([
+    { id: 'l1', timestamp: new Date().toLocaleString('ar-EG'), action: 'إنشاء النظام', details: 'تم إعداد بيانات الإدارة الافتراضية' }
+  ]);
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([
+    { id: 'u1', name: 'أحمد محمد', phone: '01000000001', role: 'CUSTOMER', avatar: 'https://picsum.photos/seed/u1/200', walletBalance: 150 },
+    { id: 'p1', name: 'الأسطى محمد أحمد', phone: '01111111112', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p1/200', walletBalance: 450 },
+  ]);
+
   const [jobs, setJobs] = useState<Job[]>([
     { 
       id: 'j1', 
@@ -29,6 +63,20 @@ const App: React.FC = () => {
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
+    if (user.role === 'ADMIN') {
+      const newLog: AdminLog = {
+        id: 'log-' + Math.random().toString(36).substr(2, 5),
+        timestamp: new Date().toLocaleString('ar-EG'),
+        action: 'تسجيل دخول مدير',
+        details: `دخل المدير برقم: ${user.phone}`
+      };
+      setAdminLogs(prev => [newLog, ...prev]);
+    } else {
+      setRegisteredUsers(prev => {
+        if (prev.find(u => u.phone === user.phone)) return prev;
+        return [user, ...prev];
+      });
+    }
     setActiveTab('home');
   };
 
@@ -43,7 +91,7 @@ const App: React.FC = () => {
       customerId: currentUser?.id || 'u1',
       providerId: provider.id,
       serviceType: provider.services[0],
-      status: JobStatus.INTERVIEWING, // يبدأ بمرحلة المقابلة والمعاينة
+      status: JobStatus.INTERVIEWING,
       price: provider.hourlyRate,
       createdAt: new Date().toLocaleDateString('en-GB'),
       description: `طلب خدمة ${provider.services[0]} من ${provider.name}`,
@@ -52,38 +100,60 @@ const App: React.FC = () => {
       ]
     };
     
-    // Simulate provider sending an estimate after 2 seconds for demo
-    setTimeout(() => {
-      setJobs(prev => prev.map(j => j.id === newJob.id ? { ...j, status: JobStatus.ESTIMATE_PROVIDED } : j));
-    }, 5000);
+    if (currentUser?.role === 'CUSTOMER') {
+      setTimeout(() => {
+        setJobs(prev => prev.map(j => j.id === newJob.id ? { 
+          ...j, 
+          status: JobStatus.ESTIMATE_PROVIDED,
+          quoteItems: [
+            { id: 'e1', label: 'مصنعية تأسيس', amount: 200, type: 'LABOR' },
+            { id: 'e2', label: 'خامات ومواسير', amount: 150, type: 'MATERIAL' }
+          ],
+          price: 350
+        } : j));
+      }, 5000);
+    }
 
     setJobs([newJob, ...jobs]);
     setActiveTab('bookings');
   };
 
-  const updateJobStatus = (jobId: string, newStatus: JobStatus) => {
-    setJobs(jobs.map(j => j.id === jobId ? { ...j, status: newStatus } : j));
+  const updateJobStatus = (jobId: string, newStatus: JobStatus, extraData: Partial<Job> = {}) => {
+    setJobs(jobs.map(j => j.id === jobId ? { ...j, ...extraData, status: newStatus } : j));
   };
 
   if (!currentUser) {
-    return <LoginView onLogin={handleLogin} />;
+    return (
+      <div className="w-full h-full md:max-w-md md:h-[90vh] md:rounded-[40px] md:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] bg-white overflow-hidden">
+        <LoginView onLogin={handleLogin} adminCreds={adminCreds} />
+      </div>
+    );
   }
 
   const renderView = () => {
     switch (activeTab) {
-      case 'home': return <HomeView onNavigate={setActiveTab} />;
+      case 'home': return <HomeView onNavigate={setActiveTab} categories={categories} />;
       case 'explore': return <ExploreView onBook={handleCreateJob} currentUser={currentUser} />;
-      case 'bookings': return <BookingsView jobs={jobs} updateStatus={updateJobStatus} />;
+      case 'bookings': return <BookingsView jobs={jobs} updateStatus={updateJobStatus} currentUser={currentUser} />;
       case 'profile': return <ProfileView user={currentUser} onLogout={handleLogout} />;
-      case 'admin': return <AdminView />;
-      default: return <HomeView onNavigate={setActiveTab} />;
+      case 'admin': return <AdminView 
+        categories={categories} 
+        setCategories={setCategories} 
+        commission={commission} 
+        setCommission={setCommission}
+        adminCreds={adminCreds}
+        setAdminCreds={setAdminCreds}
+        users={registeredUsers}
+        adminLogs={adminLogs}
+      />;
+      default: return <HomeView onNavigate={setActiveTab} categories={categories} />;
     }
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 relative shadow-2xl overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-slate-50 relative overflow-hidden md:max-w-md md:h-[90vh] md:rounded-[40px] md:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] md:border-8 md:border-slate-800">
       <Header />
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-24 scroll-smooth">
         {renderView()}
       </main>
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={currentUser?.role === 'ADMIN'} />
