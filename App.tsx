@@ -37,13 +37,15 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [commission, setCommission] = useState(15);
   const [adminCreds, setAdminCreds] = useState({ phone: '01111111111', otp: '0000' });
   const [adminLogs, setAdminLogs] = useState<AdminLog[]>([
     { id: 'l1', timestamp: new Date().toLocaleString('ar-EG'), action: 'إنشاء النظام', details: 'تم إعداد بيانات الإدارة الافتراضية' }
   ]);
+  
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([
-    { id: 'u1', name: 'أحمد محمد', phone: '01000000001', role: 'CUSTOMER', avatar: 'https://picsum.photos/seed/u1/200', walletBalance: 150 },
+    { id: 'u1', name: 'أحمد محمد', phone: '01000000001', role: 'CUSTOMER', avatar: 'https://picsum.photos/seed/u1/200', walletBalance: 1250 },
     { id: 'p1', name: 'الأسطى محمد أحمد', phone: '01111111112', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p1/200', walletBalance: 450 },
   ]);
 
@@ -62,20 +64,21 @@ const App: React.FC = () => {
   ]);
 
   const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    if (user.role === 'ADMIN') {
+    // محاكاة استعادة رصيد حقيقي إذا كان المستخدم مسجلاً مسبقاً
+    const existing = registeredUsers.find(u => u.phone === user.phone);
+    const userToLogin = existing ? existing : user;
+    
+    setCurrentUser(userToLogin);
+    if (userToLogin.role === 'ADMIN') {
       const newLog: AdminLog = {
         id: 'log-' + Math.random().toString(36).substr(2, 5),
         timestamp: new Date().toLocaleString('ar-EG'),
         action: 'تسجيل دخول مدير',
-        details: `دخل المدير برقم: ${user.phone}`
+        details: `دخل المدير برقم: ${userToLogin.phone}`
       };
       setAdminLogs(prev => [newLog, ...prev]);
-    } else {
-      setRegisteredUsers(prev => {
-        if (prev.find(u => u.phone === user.phone)) return prev;
-        return [user, ...prev];
-      });
+    } else if (!existing) {
+      setRegisteredUsers(prev => [...prev, userToLogin]);
     }
     setActiveTab('home');
   };
@@ -83,6 +86,12 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setActiveTab('home');
+    setSelectedCategory(null);
+  };
+
+  const handleCategorySelect = (catId: string) => {
+    setSelectedCategory(catId);
+    setActiveTab('explore');
   };
 
   const handleCreateJob = (provider: Provider) => {
@@ -105,15 +114,58 @@ const App: React.FC = () => {
   };
 
   const updateJobStatus = (jobId: string, newStatus: JobStatus, extraData: Partial<Job> = {}) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job || !currentUser) return;
+
+    // منطق المحفظة عند اكتمال الطلب
+    if (newStatus === JobStatus.COMPLETED && job.status !== JobStatus.COMPLETED) {
+      const finalPrice = extraData.price || job.price;
+      const netAmount = finalPrice * (1 - commission / 100);
+      
+      // تحديث رصيد الفني (إضافة)
+      setRegisteredUsers(prev => prev.map(u => 
+        u.id === job.providerId ? { ...u, walletBalance: u.walletBalance + netAmount } : u
+      ));
+      
+      // تحديث رصيد العميل (خصم إذا لم يتم الخصم مسبقاً)
+      setRegisteredUsers(prev => prev.map(u => 
+        u.id === job.customerId ? { ...u, walletBalance: u.walletBalance - finalPrice } : u
+      ));
+
+      // تحديث رصيد المستخدم الحالي في الجلسة إذا كان هو أحد الطرفين
+      if (currentUser.id === job.customerId) {
+        setCurrentUser({ ...currentUser, walletBalance: currentUser.walletBalance - finalPrice });
+      } else if (currentUser.id === job.providerId) {
+        setCurrentUser({ ...currentUser, walletBalance: currentUser.walletBalance + netAmount });
+      }
+    }
+
     setJobs(jobs.map(j => j.id === jobId ? { ...j, ...extraData, status: newStatus } : j));
+  };
+
+  const handleWalletAction = (type: 'deposit' | 'withdraw', amount: number) => {
+    if (!currentUser) return;
+    const newBalance = type === 'deposit' 
+      ? currentUser.walletBalance + amount 
+      : currentUser.walletBalance - amount;
+    
+    if (newBalance < 0) {
+      alert('عفواً، الرصيد غير كافي');
+      return;
+    }
+
+    const updatedUser = { ...currentUser, walletBalance: newBalance };
+    setCurrentUser(updatedUser);
+    setRegisteredUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+    alert(type === 'deposit' ? 'تم شحن المحفظة بنجاح ✅' : 'تم تقديم طلب السحب بنجاح، سيصلك خلال ٤٨ ساعة 💸');
   };
 
   const renderView = () => {
     switch (activeTab) {
-      case 'home': return <HomeView onNavigate={setActiveTab} categories={categories} />;
-      case 'explore': return <ExploreView onBook={handleCreateJob} currentUser={currentUser!} />;
+      case 'home': return <HomeView onNavigate={setActiveTab} onCategorySelect={handleCategorySelect} categories={categories} />;
+      case 'explore': return <ExploreView onBook={handleCreateJob} currentUser={currentUser!} initialCategory={selectedCategory} />;
       case 'bookings': return <BookingsView jobs={jobs} updateStatus={updateJobStatus} currentUser={currentUser!} />;
-      case 'profile': return <ProfileView user={currentUser} onLogout={handleLogout} />;
+      case 'profile': return <ProfileView user={currentUser} onLogout={handleLogout} onWalletAction={handleWalletAction} />;
       case 'admin': return <AdminView 
         categories={categories} 
         setCategories={setCategories} 
@@ -124,7 +176,7 @@ const App: React.FC = () => {
         users={registeredUsers}
         adminLogs={adminLogs}
       />;
-      default: return <HomeView onNavigate={setActiveTab} categories={categories} />;
+      default: return <HomeView onNavigate={setActiveTab} onCategorySelect={handleCategorySelect} categories={categories} />;
     }
   };
 

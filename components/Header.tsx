@@ -2,6 +2,8 @@
 import React from 'react';
 
 export const Header: React.FC = () => {
+  const [showNotifications, setShowNotifications] = React.useState(false);
+
   return (
     <header className="bg-white shadow-md px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 sticky top-0 z-50 flex items-center justify-between border-b border-slate-100">
       <div className="flex items-center gap-3">
@@ -18,10 +20,34 @@ export const Header: React.FC = () => {
           <span className="text-[10px] text-[#F97316] font-black uppercase tracking-widest">Sana'eyeti</span>
         </div>
       </div>
-      <button className="text-slate-700 relative hover:bg-slate-50 p-2 rounded-full transition-colors active:scale-90">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-red-600 rounded-full border-2 border-white"></span>
-      </button>
+      <div className="relative">
+        <button 
+          onClick={() => setShowNotifications(!showNotifications)}
+          className="text-slate-700 relative hover:bg-slate-50 p-2 rounded-full transition-colors active:scale-90"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-red-600 rounded-full border-2 border-white"></span>
+        </button>
+
+        {showNotifications && (
+          <div className="absolute left-0 mt-4 w-72 bg-white rounded-[24px] shadow-2xl border-2 border-slate-50 p-4 animate-in slide-in-from-top-2 duration-300 z-[60]">
+             <div className="flex justify-between items-center mb-4">
+                <span className="font-black text-slate-900">التنبيهات</span>
+                <button onClick={() => setShowNotifications(false)} className="text-slate-400 text-sm">إغلاق</button>
+             </div>
+             <div className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded-xl border-r-4 border-blue-500">
+                   <p className="text-xs font-bold text-slate-700">تم حجز طلبك بنجاح! الصنايعي في الطريق إليك.</p>
+                   <span className="text-[10px] text-blue-400 font-black">منذ دقيقتين</span>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-xl border-r-4 border-orange-500">
+                   <p className="text-xs font-bold text-slate-700">تنبيه أمان: لا تدفع كاش خارج التطبيق لضمان حقك.</p>
+                   <span className="text-[10px] text-orange-400 font-black">منذ ساعة</span>
+                </div>
+             </div>
+          </div>
+        )}
+      </div>
     </header>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Provider, User } from '../types';
 
 const MOCK_PROVIDERS: Provider[] = [
@@ -26,33 +26,49 @@ const MOCK_PROVIDERS: Provider[] = [
 interface ExploreViewProps {
   onBook: (provider: Provider) => void;
   currentUser: User;
+  initialCategory?: string | null;
 }
 
-export const ExploreView: React.FC<ExploreViewProps> = ({ onBook, currentUser }) => {
+export const ExploreView: React.FC<ExploreViewProps> = ({ onBook, currentUser, initialCategory }) => {
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [filter, setFilter] = useState<string>(initialCategory || '');
   const isProvider = currentUser.role === 'PROVIDER';
+
+  const filteredProviders = useMemo(() => {
+    if (!filter) return MOCK_PROVIDERS;
+    return MOCK_PROVIDERS.filter(p => p.services.some(s => s.includes(filter)));
+  }, [filter]);
 
   return (
     <div className="h-full flex flex-col relative bg-slate-100 overflow-hidden">
       {/* Header Info */}
       <div className="p-4 absolute top-0 left-0 right-0 z-10 pointer-events-none">
         <div className="bg-white/90 backdrop-blur shadow-lg rounded-[24px] px-6 py-4 border border-white/50 pointer-events-auto flex items-center justify-between">
-           <div>
-             <h4 className="font-black text-slate-800 text-sm">{isProvider ? 'وضع الصنايعي' : 'اكتشف الصنايعية'}</h4>
-             <p className="text-[10px] text-slate-500 font-bold">{isProvider ? 'ترى زملائك في المهنة حولك' : 'ابحث عن أقرب فني لموقعك'}</p>
+           <div className="flex items-center gap-3">
+             <div className="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center text-xl">📍</div>
+             <div>
+               <h4 className="font-black text-slate-800 text-sm leading-none">{isProvider ? 'وضع الصنايعي' : 'اكتشف الصنايعية'}</h4>
+               <p className="text-[10px] text-slate-500 font-bold mt-1">
+                 {filter ? `فلترة: ${filter}` : 'ابحث عن أقرب فني لموقعك'}
+               </p>
+             </div>
            </div>
-           <div className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] font-black">
-             موقعك نشط 📍
-           </div>
+           {filter && (
+             <button 
+               onClick={() => setFilter('')}
+               className="bg-red-100 text-red-600 px-3 py-1.5 rounded-full text-[10px] font-black active:scale-90"
+             >
+               مسح الفلتر ×
+             </button>
+           )}
         </div>
       </div>
 
       {/* Map Content */}
       <div className="flex-1 bg-slate-200 relative overflow-hidden">
-        {/* Fake Map Elements */}
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.google.com/maps/about/images/home/home-maps-icon.svg')] bg-repeat bg-[length:100px]"></div>
         
-        {MOCK_PROVIDERS.map(p => (
+        {filteredProviders.map(p => (
           <button
             key={p.id}
             onClick={() => setSelectedProvider(p)}
@@ -120,6 +136,16 @@ export const ExploreView: React.FC<ExploreViewProps> = ({ onBook, currentUser })
               <span>{isProvider ? 'تواصل للتعاون' : 'مقابلة وحجز'}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {filteredProviders.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center p-10 pointer-events-none">
+          <div className="bg-white/90 backdrop-blur p-8 rounded-[40px] text-center shadow-2xl border-2 border-slate-100 animate-in zoom-in duration-300">
+             <span className="text-6xl mb-4 block">🔍</span>
+             <h4 className="text-2xl font-black text-slate-900 mb-2">مفيش صنايعية هنا</h4>
+             <p className="text-slate-500 font-bold">جرب تبحث في قسم تاني أو تغير مكانك.</p>
           </div>
         </div>
       )}
