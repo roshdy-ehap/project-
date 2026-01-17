@@ -7,19 +7,22 @@ const MOCK_PROVIDERS: Provider[] = [
     id: 'p1', name: 'الأسطى محمد أحمد', phone: '011', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p1/200', 
     bio: 'خبرة ١٠ سنوات في أعمال تأسيس وصيانة الكهرباء بمدينة نصر.', services: ['كهرباء'], 
     rating: { average: 4.8, count: 127, breakdown: { 5: 98, 4: 22, 3: 5, 2: 1, 1: 1 } },
-    completedJobs: 156, hourlyRate: 200, isVerified: true, location: { lat: 30.0444, lng: 31.2357 }, walletBalance: 450 
+    // Fix: Added missing verificationStatus
+    completedJobs: 156, hourlyRate: 200, isVerified: true, verificationStatus: 'VERIFIED', location: { lat: 30.0444, lng: 31.2357 }, walletBalance: 450 
   },
   { 
     id: 'p2', name: 'الأسطى علي حسن', phone: '012', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p2/200', 
     bio: 'متخصص في إصلاح التسريبات وتركيب الأدوات الصحية الحديثة.', services: ['سباكة'], 
     rating: { average: 4.5, count: 89, breakdown: { 5: 60, 4: 15, 3: 10, 2: 2, 1: 2 } },
-    completedJobs: 89, hourlyRate: 180, isVerified: true, location: { lat: 30.0500, lng: 31.2400 }, walletBalance: 120 
+    // Fix: Added missing verificationStatus
+    completedJobs: 89, hourlyRate: 180, isVerified: true, verificationStatus: 'VERIFIED', location: { lat: 30.0500, lng: 31.2400 }, walletBalance: 120 
   },
   { 
     id: 'p3', name: 'الأسطى هاني - نجار', phone: '015', role: 'PROVIDER', avatar: 'https://picsum.photos/seed/p3/200', 
     bio: 'فك وتركيب موبيليا وتصليح أبواب وشبابيك بسرعه ودقة.', services: ['نجارة'], 
     rating: { average: 4.9, count: 210, breakdown: { 5: 180, 4: 20, 3: 10, 2: 0, 1: 0 } },
-    completedJobs: 210, hourlyRate: 150, isVerified: true, location: { lat: 30.0400, lng: 31.2300 }, walletBalance: 890 
+    // Fix: Added missing verificationStatus
+    completedJobs: 210, hourlyRate: 150, isVerified: true, verificationStatus: 'VERIFIED', location: { lat: 30.0400, lng: 31.2300 }, walletBalance: 890 
   },
 ];
 

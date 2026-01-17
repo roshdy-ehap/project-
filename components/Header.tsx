@@ -3,6 +3,22 @@ import React from 'react';
 
 export const Header: React.FC = () => {
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const [notifications] = React.useState([
+    { id: 1, type: 'alert', text: '⚠️ توثيقك ينتهي بعد ١٥ يوم! جدد فوراً علشان ما تتوقفش عن الشغل.', time: 'منذ دقيقتين' },
+    { id: 2, type: 'danger', text: '🚨 توثيقك ينتهي بعد أسبوع! لو ما جددتش هنوقف حسابك.', time: 'منذ ساعة' },
+    { id: 3, type: 'warning', text: '⚠️ تحذير: تم رصد محاولة مخالفة (مشاركة رقم هاتف). هذا تحذيرك الأول.', time: 'منذ ٣ ساعات' },
+    { id: 4, type: 'danger', text: '🚫 تم إيقاف حسابك لمدة ٧ أيام. السبب: بلاغ جدي من عميل.', time: 'منذ يوم' }
+  ]);
+
+  const getNotifStyles = (type: string) => {
+    switch (type) {
+      case 'success': return 'bg-blue-50 border-blue-500 text-blue-900';
+      case 'warning': return 'bg-orange-50 border-orange-500 text-orange-900';
+      case 'alert': return 'bg-yellow-50 border-yellow-500 text-yellow-900';
+      case 'danger': return 'bg-red-50 border-red-500 text-red-900';
+      default: return 'bg-slate-50 border-slate-500 text-slate-900';
+    }
+  };
 
   return (
     <header className="bg-white shadow-md px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 sticky top-0 z-50 flex items-center justify-between border-b border-slate-100">
@@ -26,25 +42,26 @@ export const Header: React.FC = () => {
           className="text-slate-700 relative hover:bg-slate-50 p-2 rounded-full transition-colors active:scale-90"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-red-600 rounded-full border-2 border-white"></span>
+          {notifications.length > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-red-600 rounded-full border-2 border-white"></span>
+          )}
         </button>
 
         {showNotifications && (
-          <div className="absolute left-0 mt-4 w-72 bg-white rounded-[24px] shadow-2xl border-2 border-slate-50 p-4 animate-in slide-in-from-top-2 duration-300 z-[60]">
-             <div className="flex justify-between items-center mb-4">
-                <span className="font-black text-slate-900">التنبيهات</span>
-                <button onClick={() => setShowNotifications(false)} className="text-slate-400 text-sm">إغلاق</button>
+          <div className="absolute left-0 mt-4 w-80 bg-white rounded-[32px] shadow-2xl border-2 border-slate-50 p-5 animate-in slide-in-from-top-2 duration-300 z-[60] max-h-[80vh] overflow-y-auto">
+             <div className="flex justify-between items-center mb-6">
+                <span className="font-black text-slate-900 text-lg">التنبيهات</span>
+                <button onClick={() => setShowNotifications(false)} className="text-slate-400 text-sm font-black">مسح الكل</button>
              </div>
-             <div className="space-y-3">
-                <div className="p-3 bg-blue-50 rounded-xl border-r-4 border-blue-500">
-                   <p className="text-xs font-bold text-slate-700">تم حجز طلبك بنجاح! الصنايعي في الطريق إليك.</p>
-                   <span className="text-[10px] text-blue-400 font-black">منذ دقيقتين</span>
-                </div>
-                <div className="p-3 bg-orange-50 rounded-xl border-r-4 border-orange-500">
-                   <p className="text-xs font-bold text-slate-700">تنبيه أمان: لا تدفع كاش خارج التطبيق لضمان حقك.</p>
-                   <span className="text-[10px] text-orange-400 font-black">منذ ساعة</span>
-                </div>
+             <div className="space-y-4">
+                {notifications.map((n) => (
+                  <div key={n.id} className={`p-4 rounded-2xl border-r-8 shadow-sm ${getNotifStyles(n.type)}`}>
+                    <p className="text-xs font-black leading-relaxed">{n.text}</p>
+                    <span className="text-[9px] opacity-60 font-black mt-2 block uppercase">{n.time}</span>
+                  </div>
+                ))}
              </div>
+             <button className="w-full mt-6 py-3 text-[#1E3A8A] font-black text-xs border-t border-slate-50">عرض سجل التنبيهات الكامل</button>
           </div>
         )}
       </div>

@@ -1,6 +1,17 @@
 
 export type UserRole = 'CUSTOMER' | 'PROVIDER' | 'ADMIN';
 
+export type VerificationStatus = 
+  | 'PENDING' 
+  | 'DOCUMENTS_UPLOADED' 
+  | 'UNDER_REVIEW' 
+  | 'INTERVIEW_SCHEDULED' 
+  | 'INTERVIEW_COMPLETED' 
+  | 'VERIFIED' 
+  | 'REJECTED' 
+  | 'SUSPENDED'
+  | 'EXPIRED';
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +19,37 @@ export interface User {
   role: UserRole;
   avatar: string;
   walletBalance: number;
+}
+
+export interface VerificationDetails {
+  idNumber: string;
+  fullNameOnId: string;
+  birthDate: string;
+  expiryDate: string;
+  images: {
+    front: string;
+    back: string;
+    selfie: string;
+  };
+  faceMatchScore?: number;
+}
+
+export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'RESCHEDULED';
+
+export interface InterviewDetails {
+  id: string;
+  date: string;
+  time: string;
+  type: 'video' | 'office';
+  status: InterviewStatus;
+  meetingLink?: string;
+  interviewerName?: string;
+  assessment?: {
+    communication: number; // 1-5
+    expertise: number; // 1-5
+    professionalism: number; // 1-5
+    notes: string;
+  };
 }
 
 export interface Provider extends User {
@@ -21,17 +63,23 @@ export interface Provider extends User {
   completedJobs: number;
   hourlyRate: number;
   isVerified: boolean;
+  verificationStatus: VerificationStatus;
+  verificationExpiryDate?: string;
+  verificationDetails?: VerificationDetails;
+  interview?: InterviewDetails;
   location: {
     lat: number;
     lng: number;
   };
+  rejectionReason?: string;
 }
 
 export enum JobStatus {
   PENDING = 'PENDING',
-  INTERVIEWING = 'INTERVIEWING', // مرحلة المقابلة والمعاينة
-  ESTIMATE_PROVIDED = 'ESTIMATE_PROVIDED', // تم تقديم عرض سعر نهائي بعد المعاينة
-  DEPOSIT_PAID = 'DEPOSIT_PAID', // المبلغ محجوز في النظام (Escrow)
+  INTERVIEWING = 'INTERVIEWING',
+  ESTIMATE_PROVIDED = 'ESTIMATE_PROVIDED',
+  DEPOSIT_PAID = 'DEPOSIT_PAID',
+  ARRIVED = 'ARRIVED',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
@@ -46,13 +94,6 @@ export interface Message {
   isSystem?: boolean;
 }
 
-export interface QuoteItem {
-  id: string;
-  label: string;
-  amount: number;
-  type: 'LABOR' | 'MATERIAL' | 'OTHER';
-}
-
 export interface Job {
   id: string;
   customerId: string;
@@ -63,5 +104,6 @@ export interface Job {
   createdAt: string;
   description: string;
   messages: Message[];
-  quoteItems?: QuoteItem[]; // بنود عرض السعر التفصيلي
+  penaltyApplied?: number;
+  cancelledBy?: UserRole;
 }
